@@ -56,6 +56,8 @@ export interface TrendData {
 export interface DailyBrief {
     text: string;
     bold: string[];
+    type?: 'risk' | 'metric' | 'bot' | 'general';
+    icon?: string;
 }
 
 export interface DashboardResponse {

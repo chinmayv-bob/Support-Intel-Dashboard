@@ -43,7 +43,8 @@ export const MOCK_TRENDS: TrendData[] = [
         needs_escalation: true,
         growth_percentage: 25,
         first_seen: "2026-02-14",
-        last_seen: "2026-02-15"
+        last_seen: "2026-02-15",
+        ticket_ids: ["#T-9241"]
     }
 ];
 
