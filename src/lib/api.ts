@@ -1,4 +1,4 @@
-import type { DashboardResponse, TrendData, QualityData, MetricData } from './types';
+import type { DashboardResponse, TrendData, QualityData, MetricData, KBData } from './types';
 
 const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL;
 
@@ -44,4 +44,5 @@ export const api = {
     getTrends: () => apiFetch<{ trends: TrendData[] }>({ action: 'getTrends' }),
     getQualityData: () => apiFetch<QualityData>({ action: 'getQualityData' }),
     getMetrics: () => apiFetch<{ metrics: MetricData[] }>({ action: 'getMetrics' }),
+    getKB: () => apiFetch<KBData>({ action: 'getKB' }),
 };

@@ -3,6 +3,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useTrends } from '../hooks/useTrends';
 import { useMetrics } from '../hooks/useMetrics';
+import { useDashboard } from '../hooks/useDashboard';
 import { Skeleton } from '../components/shared/Skeleton';
 
 function cn(...inputs: ClassValue[]) {
@@ -12,9 +13,39 @@ function cn(...inputs: ClassValue[]) {
 const AnalyticsView: React.FC = () => {
     const { data: trendsData, isLoading: isTrendsLoading, error: trendsError } = useTrends();
     const { isLoading: isMetricsLoading, error: metricsError } = useMetrics();
+    const { data: dashboard, isLoading: isDashboardLoading } = useDashboard();
 
-    const isLoading = isTrendsLoading || isMetricsLoading;
+    // Filter State
+    const [selectedPanels, setSelectedPanels] = React.useState<Set<string>>(new Set());
+    const [showNegativeOnly, setShowNegativeOnly] = React.useState(true);
+
+    // Initialize panels when data loads
+    React.useEffect(() => {
+        if (dashboard?.riskScores) {
+            const allPanels = new Set(dashboard.riskScores.map(r => r.name));
+            setSelectedPanels(allPanels);
+        }
+    }, [dashboard?.riskScores]);
+
+
+    const isLoading = isTrendsLoading || isMetricsLoading || isDashboardLoading;
     const hasError = !!trendsError || !!metricsError;
+
+    // Prepare filtered tickets for display
+    const filteredTickets = React.useMemo(() => {
+        return (dashboard?.criticalTickets || [])
+            .filter(t => {
+                // 1. Filter by Panel Selection
+                if (!selectedPanels || selectedPanels.size === 0) return true;
+                const panel = (t.panel || '').toLowerCase();
+                return Array.from(selectedPanels).some(sp => {
+                    const sPanel = (sp || '').toLowerCase();
+                    return panel.includes(sPanel) || sPanel.includes(panel);
+                });
+            })
+            // 2. Filter by Sentiment Toggle (Default True: Show only <= 3)
+            .filter(t => !showNegativeOnly || (Number(t.sentiment?.score) || 10) <= 3);
+    }, [dashboard?.criticalTickets, selectedPanels, showNegativeOnly]);
 
     if (hasError) {
         return (
@@ -40,7 +71,15 @@ const AnalyticsView: React.FC = () => {
             <aside className="w-full xl:w-72 shrink-0 space-y-6 xl:sticky xl:top-24">
                 <div className="flex items-center justify-between">
                     <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide">Filters</h3>
-                    <button className="text-xs text-primary font-medium hover:underline">Reset</button>
+                    <button
+                        onClick={() => {
+                            if (dashboard?.riskScores) {
+                                setSelectedPanels(new Set(dashboard.riskScores.map(r => r.name)));
+                            }
+                            setShowNegativeOnly(true);
+                        }}
+                        className="text-xs text-primary font-medium hover:underline"
+                    >Reset</button>
                 </div>
 
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
@@ -50,10 +89,20 @@ const AnalyticsView: React.FC = () => {
                             Panels
                         </h4>
                         <div className="space-y-2">
-                            {['Billing & Refunds', 'Technical Support', 'Account Access', 'Feature Requests'].map((panel, i) => (
+                            {(dashboard?.riskScores || []).map((risk, i) => (
                                 <label key={i} className="flex items-center gap-3 cursor-pointer group">
-                                    <input type="checkbox" defaultChecked={i < 2} className="rounded border-slate-300 text-primary focus:ring-primary/20 w-4 h-4" />
-                                    <span className="text-sm text-slate-600 group-hover:text-slate-900">{panel}</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedPanels.has(risk.name)}
+                                        onChange={(e) => {
+                                            const newPanels = new Set(selectedPanels);
+                                            if (e.target.checked) newPanels.add(risk.name);
+                                            else newPanels.delete(risk.name);
+                                            setSelectedPanels(newPanels);
+                                        }}
+                                        className="rounded border-slate-300 text-primary focus:ring-primary/20 w-4 h-4"
+                                    />
+                                    <span className="text-sm text-slate-600 group-hover:text-slate-900">{risk.name}</span>
                                 </label>
                             ))}
                         </div>
@@ -68,9 +117,14 @@ const AnalyticsView: React.FC = () => {
                             <label className="flex items-center justify-between p-2 rounded-lg border border-red-100 bg-red-50/50 cursor-pointer">
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-red-500 text-[18px]">sentiment_very_dissatisfied</span>
-                                    <span className="text-sm font-medium text-red-900">Frustrated (4+)</span>
+                                    <span className="text-sm font-medium text-red-900">Negative Only</span>
                                 </div>
-                                <input type="checkbox" defaultChecked className="rounded border-red-300 text-red-600 w-4 h-4" />
+                                <input
+                                    type="checkbox"
+                                    checked={showNegativeOnly}
+                                    onChange={(e) => setShowNegativeOnly(e.target.checked)}
+                                    className="rounded border-red-300 text-red-600 w-4 h-4"
+                                />
                             </label>
                         </div>
                     </div>
@@ -106,29 +160,49 @@ const AnalyticsView: React.FC = () => {
                             </button>
                         </div>
                         <div className="flex-1 flex items-end justify-between gap-2 md:gap-4 px-2">
-                            {[
-                                { day: 'Mon', h: '65%' },
-                                { day: 'Tue', h: '82%' },
-                                { day: 'Wed', h: '45%' },
-                                { day: 'Thu', h: '55%' },
-                                { day: 'Fri', h: '90%', active: true },
-                                { day: 'Sat', h: '25%', weekend: true },
-                                { day: 'Sun', h: '20%', weekend: true },
-                            ].map((bar, i) => (
-                                <div key={i} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
-                                    <div className="relative w-full bg-slate-100 rounded-t-sm h-32 group-hover:bg-slate-200 transition-colors overflow-hidden">
-                                        <div
-                                            className={cn(
-                                                "absolute bottom-0 w-full rounded-t-sm transition-all",
-                                                bar.active ? "bg-primary border-t-2 border-dashed border-primary" :
-                                                    bar.weekend ? "bg-slate-300" : "bg-primary group-hover:bg-primary-dark"
-                                            )}
-                                            style={{ height: bar.h }}
-                                        />
-                                    </div>
-                                    <span className={cn("text-xs font-medium", bar.active ? "text-primary font-bold" : "text-slate-500")}>{bar.day}</span>
-                                </div>
-                            ))}
+                            {(() => {
+                                // Extract last 7 days volume from metrics sparkline
+                                const volumeMetric = dashboard?.metrics?.find(m => m.label === 'Total Tickets');
+                                const volumeData = volumeMetric?.sparklineData
+                                    ? volumeMetric.sparklineData.split(',').map(Number)
+                                    : [65, 82, 45, 55, 90, 25, 20]; // Fallback to mock if empty
+
+                                // Generate labels for the last 7 days ending today
+                                const days: string[] = [];
+                                for (let i = 6; i >= 0; i--) {
+                                    const d = new Date();
+                                    d.setDate(d.getDate() - i);
+                                    days.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+                                }
+
+                                const sevenDaysData = volumeData.slice(-7);
+
+                                return sevenDaysData.map((val, i) => {
+                                    const maxVal = Math.max(...sevenDaysData, 100); // Normalize height
+                                    const h = Math.round((val / maxVal) * 100) + '%';
+                                    const isActive = i === 6; // Last one is today
+                                    // Highlight weekends if label is Sat/Sun
+                                    const isWeekend = days[i] === 'Sat' || days[i] === 'Sun';
+
+                                    return (
+                                        <div key={i} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
+                                            <div className="relative w-full bg-slate-100 rounded-t-sm h-32 group-hover:bg-slate-200 transition-colors overflow-hidden">
+                                                <div
+                                                    className={cn(
+                                                        "absolute bottom-0 w-full rounded-t-sm transition-all",
+                                                        isActive ? "bg-primary border-t-2 border-dashed border-primary" :
+                                                            isWeekend ? "bg-slate-300" : "bg-primary group-hover:bg-primary-dark"
+                                                    )}
+                                                    style={{ height: h }}
+                                                />
+                                            </div>
+                                            <span className={cn("text-xs font-medium", isActive ? "text-primary font-bold" : "text-slate-500")}>
+                                                {days[i]}
+                                            </span>
+                                        </div>
+                                    );
+                                });
+                            })()}
                         </div>
                     </div>
 
@@ -142,7 +216,7 @@ const AnalyticsView: React.FC = () => {
                                 <h3 className="font-bold text-slate-900 text-sm">Frustration Feed</h3>
                             </div>
                             <span className="px-2 py-1 bg-white border border-red-100 text-[10px] font-bold text-red-600 rounded">
-                                {isLoading ? '-' : (trendsData?.trends || []).length} Detected
+                                {isLoading ? '-' : filteredTickets.length} Detected
                             </span>
                         </div>
                         <div className="overflow-y-auto flex-1 p-2 space-y-2">
@@ -154,20 +228,20 @@ const AnalyticsView: React.FC = () => {
                                     </div>
                                 ))
                             ) : (
-                                [
-                                    { id: "#T-9241", score: "4.8", msg: ' "I have been waiting for 3 days for a simple password reset. This is unacceptable service..." ', color: 'bg-red-500', time: '2 mins ago' },
-                                    { id: "#T-9102", score: "4.2", msg: ' "Why was I charged twice? The system said the first transaction failed..." ', color: 'bg-orange-400', time: '45 mins ago' },
-                                    { id: "#T-8991", score: "4.0", msg: ' "Your agent just closed my ticket without resolving the API timeout issue." ', color: 'bg-orange-400', time: '1 hr ago' },
-                                ].map((item, i) => (
-                                    <div key={i} className="p-3 bg-white hover:bg-slate-50 border border-slate-100 rounded-lg group transition-colors cursor-pointer relative overflow-hidden">
-                                        <div className={cn("absolute left-0 top-0 bottom-0 w-1", item.color)}></div>
-                                        <div className="flex justify-between items-start mb-1 pl-2">
-                                            <span className="text-xs font-mono font-bold text-slate-500">{item.id}</span>
-                                            <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">Score: {item.score}</span>
+                                filteredTickets
+                                    .slice(0, 10) // Top 10 matches
+                                    .map((item, i) => (
+                                        <div key={i} className="p-3 bg-white hover:bg-slate-50 border border-slate-100 rounded-lg group transition-colors cursor-pointer relative overflow-hidden">
+                                            <div className={cn("absolute left-0 top-0 bottom-0 w-1",
+                                                (item.sentiment?.score || 0) < 2 ? 'bg-red-500' : 'bg-orange-400'
+                                            )}></div>
+                                            <div className="flex justify-between items-start mb-1 pl-2">
+                                                <span className="text-xs font-mono font-bold text-slate-500">{item.ticket_id}</span>
+                                                <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">Score: {item.sentiment?.score}</span>
+                                            </div>
+                                            <p className="text-xs text-slate-800 pl-2 leading-relaxed italic line-clamp-2">"{item.summary}"</p>
                                         </div>
-                                        <p className="text-xs text-slate-800 pl-2 leading-relaxed italic">{item.msg}</p>
-                                    </div>
-                                ))
+                                    ))
                             )}
                         </div>
                     </div>
@@ -193,27 +267,33 @@ const AnalyticsView: React.FC = () => {
                                 </div>
                             ))
                         ) : (
-                            (trendsData?.trends || []).map((trend, i) => (
-                                <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 hover:shadow-md transition-all group">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <span className={cn(
-                                            "text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide border flex items-center gap-1",
-                                            trend.state === 'ESCALATING' ? "bg-red-100 text-red-700 border-red-200" :
-                                                trend.state === 'NEW' ? "bg-blue-100 text-blue-700 border-blue-200" :
-                                                    trend.state === 'RECURRING' ? "bg-amber-100 text-amber-700 border-amber-200" :
-                                                        "bg-slate-100 text-slate-600 border-slate-200"
-                                        )}>
-                                            <span className="material-symbols-outlined text-[12px]">trending_up</span> {trend.state}
-                                        </span>
+                            (trendsData?.trends || [])
+                                .map((trend, i) => (
+                                    <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 hover:shadow-md transition-all group">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <span className={cn(
+                                                "text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide border flex items-center gap-1",
+                                                trend.state === 'ESCALATING' ? "bg-red-100 text-red-700 border-red-200" :
+                                                    trend.state === 'NEW' ? "bg-blue-100 text-blue-700 border-blue-200" :
+                                                        trend.state === 'RECURRING' ? "bg-amber-100 text-amber-700 border-amber-200" :
+                                                            "bg-slate-100 text-slate-600 border-slate-200"
+                                            )}>
+                                                <span className="material-symbols-outlined text-[12px]">trending_up</span> {trend.state}
+                                            </span>
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-900 mb-1">{trend.title}</h4>
+                                        <p className="text-xs text-slate-500 mb-4">{trend.root_cause}</p>
+                                        <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-primary text-[18px]">confirmation_number</span>
+                                                <p className="text-xs text-slate-700 font-medium">{trend.ticket_count || (trend as any).ticket_ids?.length || 0} tickets</p>
+                                            </div>
+                                            {trend.confidence > 0 && (
+                                                <span className="text-[10px] font-bold text-slate-500">{trend.confidence}% confidence</span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <h4 className="text-sm font-bold text-slate-900 mb-1">{trend.title}</h4>
-                                    <p className="text-xs text-slate-500 mb-4">{trend.root_cause}</p>
-                                    <div className="pt-3 border-t border-slate-200/60 flex items-start gap-2">
-                                        <span className="material-symbols-outlined text-primary text-[18px]">psychology</span>
-                                        <p className="text-xs text-slate-700 font-medium">{trend.affected_panels.join(', ')}</p>
-                                    </div>
-                                </div>
-                            ))
+                                ))
                         )}
                         {!isLoading && (trendsData?.trends || []).length === 0 && (
                             <div className="col-span-full py-12 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">

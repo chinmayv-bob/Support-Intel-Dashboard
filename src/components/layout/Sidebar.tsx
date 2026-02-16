@@ -15,6 +15,7 @@ const Sidebar: React.FC = () => {
         { id: 'analytics', label: 'Trend Analysis', icon: 'auto_graph' },
         { id: 'quality', label: 'Quality & Coaching', icon: 'fact_check' },
         { id: 'handoff', label: 'Engineering Handoff', icon: 'terminal' },
+        { id: 'library', label: 'Library', icon: 'library_books' },
     ] as const;
 
     if (!isSidebarOpen) return null;

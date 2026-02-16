@@ -44,6 +44,7 @@ export interface TrendData {
     state: 'NEW' | 'RECURRING' | 'ESCALATING' | 'DECLINING';
     ticket_count: number;
     affected_panels: string[];
+    ticket_ids: string[];
     root_cause: string;
     confidence: number;
     needs_escalation: boolean;
@@ -65,7 +66,29 @@ export interface DashboardResponse {
     generatedAt: string;
 }
 
+
 export interface QualityData {
     qualitySignals: any;
     coachingOpportunities: string[];
+}
+
+export interface KBArticle {
+    kb_id: string;
+    title: string;
+    problem_statement: string;
+    resolution_steps: string;
+    panels_affected: string[];
+    keywords: string[];
+}
+
+export interface KBFAQ {
+    question: string;
+    answer: string;
+    panel: string;
+    keywords: string[];
+}
+
+export interface KBData {
+    articles: KBArticle[];
+    faqs: KBFAQ[];
 }

@@ -20,7 +20,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 isSidebarOpen ? "pl-64" : "pl-0"
             )}>
                 <Header />
-                <main className="max-w-[1600px] mx-auto p-8">
+                <main className="max-w-[1600px] mx-auto p-0">
                     {children}
                 </main>
             </div>

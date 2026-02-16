@@ -8,7 +8,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const Header: React.FC = () => {
-    const { viewMode, setViewMode } = useUIStore();
+    const { viewMode, setViewMode, searchQuery, setSearchQuery } = useUIStore();
 
     return (
         <header className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white/95 backdrop-blur-sm px-6 py-3 flex items-center justify-between gap-6">
@@ -24,6 +24,8 @@ const Header: React.FC = () => {
                     <input
                         type="text"
                         placeholder="Search intel..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="h-full w-full bg-transparent border-none focus:ring-0 text-sm placeholder:text-slate-400 text-slate-900 ml-2"
                     />
                 </div>

@@ -18,24 +18,41 @@
   --font-display: "Inter", sans-serif;
 
   @keyframes pulse-glow {
-    0% {
-      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
-    }
 
-    70% {
-      box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-    }
-
+    0%,
     100% {
-      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    50% {
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+      border-color: rgba(239, 68, 68, 0.8);
     }
   }
 }
 
 @layer utilities {
   .animate-pulse-glow {
-    animation: pulse-glow 2s infinite;
+    animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #475569;
 }
 
 :root {

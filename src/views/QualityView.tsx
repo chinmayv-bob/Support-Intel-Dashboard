@@ -112,9 +112,9 @@ const QualityView: React.FC = () => {
                             ))
                         ) : (
                             [
-                                { title: "Coaching Win", icon: "emoji_events", color: "text-green-600", bg: "bg-green-50", desc: qualityData?.coachingOpportunities?.[0] || "No major wins logged today." },
-                                { title: "Coaching Risk", icon: "warning", color: "text-amber-600", bg: "bg-amber-50", desc: qualityData?.coachingOpportunities?.[1] || "No critical risks detected." },
-                                { title: "Next Action", icon: "bolt", color: "text-primary", bg: "bg-primary/5", desc: qualityData?.coachingOpportunities?.[2] || "Follow standard SOPs." },
+                                { title: "Coaching Win", icon: "emoji_events", color: "text-green-600", bg: "bg-green-50", desc: (qualityData as any)?.coaching?.win || qualityData?.coachingOpportunities?.[0] || "No major wins logged today." },
+                                { title: "Coaching Risk", icon: "warning", color: "text-amber-600", bg: "bg-amber-50", desc: (qualityData as any)?.coaching?.risk || qualityData?.coachingOpportunities?.[1] || "No critical risks detected." },
+                                { title: "Next Action", icon: "bolt", color: "text-primary", bg: "bg-primary/5", desc: (qualityData as any)?.coaching?.action || qualityData?.coachingOpportunities?.[2] || "Follow standard SOPs." },
                             ].map((coach, i) => (
                                 <div key={i} className={cn("p-4 rounded-lg border border-slate-100", coach.bg)}>
                                     <div className={cn("flex items-center gap-2 mb-2 font-bold text-sm", coach.color)}>
@@ -167,8 +167,52 @@ const QualityView: React.FC = () => {
                                     <Skeleton className="h-16 w-full" />
                                 </div>
                             ))
-                        ) : (
-                            (dashboard?.criticalTickets || []).slice(0, 3).map((ticket, i) => (
+                        ) : (() => {
+                            // Use process_flagged from backend quality data first
+                            const flagged = qualityData?.qualitySignals?.process_flagged || [];
+
+                            if (flagged.length > 0) {
+                                return flagged.slice(0, 5).map((item: any, i: number) => (
+                                    <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-100 group">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex flex-col gap-1">
+                                                <h4 className="text-sm font-bold text-slate-900">{item.id}: {item.description || item.desc}</h4>
+                                                {item.redundant_count > 0 && (
+                                                    <div className="flex items-center gap-1.5 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md w-fit">
+                                                        <span className="material-symbols-outlined text-[12px]">content_paste_off</span>
+                                                        <span className="text-[10px] font-bold">{item.redundant_count} Redundant Replies</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className="bg-red-100 text-red-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0">{item.signal_type || 'Alert'}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 leading-relaxed mb-3">{item.advice}</p>
+                                        <div className="bg-white p-3 rounded border border-indigo-100 relative mt-2">
+                                            <div className="absolute -top-2 left-3 bg-indigo-50 text-primary text-[9px] font-bold px-1.5 rounded uppercase">AI Advice</div>
+                                            <p className="text-[11px] font-medium text-slate-600 flex gap-2">
+                                                <span className="material-symbols-outlined text-[14px] text-primary">auto_awesome</span>
+                                                {item.advice}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ));
+                            }
+
+                            // Fallback: use most negative critical tickets (score <= 2)
+                            const negativeTickets = (dashboard?.criticalTickets || [])
+                                .filter(t => (t.sentiment?.score || 10) <= 2)
+                                .slice(0, 3);
+
+                            if (negativeTickets.length === 0) {
+                                return (
+                                    <div className="py-8 text-center text-slate-400">
+                                        <span className="material-symbols-outlined text-3xl mb-2">check_circle</span>
+                                        <p className="text-sm font-medium">No process flags detected</p>
+                                    </div>
+                                );
+                            }
+
+                            return negativeTickets.map((ticket, i) => (
                                 <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-100 group">
                                     <div className="flex justify-between items-start mb-2">
                                         <h4 className="text-sm font-bold text-slate-900">{ticket.ticket_id}: {ticket.summary}</h4>
@@ -179,12 +223,12 @@ const QualityView: React.FC = () => {
                                         <div className="absolute -top-2 left-3 bg-indigo-50 text-primary text-[9px] font-bold px-1.5 rounded uppercase">AI Advice</div>
                                         <p className="text-[11px] font-medium text-slate-600 flex gap-2">
                                             <span className="material-symbols-outlined text-[14px] text-primary">auto_awesome</span>
-                                            Address the root cause immediately to prevent escalation.
+                                            {ticket.ai_reasoning || "Address the root cause immediately to prevent escalation."}
                                         </p>
                                     </div>
                                 </div>
-                            ))
-                        )}
+                            ));
+                        })()}
                     </div>
                 </div>
             </div>

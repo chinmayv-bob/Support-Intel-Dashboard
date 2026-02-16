@@ -10,6 +10,7 @@ const FocusView = lazy(() => import('./views/FocusView'));
 const AnalyticsView = lazy(() => import('./views/AnalyticsView'));
 const QualityView = lazy(() => import('./views/QualityView'));
 const HandoffView = lazy(() => import('./views/HandoffView'));
+const IntelLibrary = lazy(() => import('./views/IntelLibrary'));
 
 const App: React.FC = () => {
   const { viewMode } = useUIStore();
@@ -24,6 +25,8 @@ const App: React.FC = () => {
         return <QualityView />;
       case 'handoff':
         return <HandoffView />;
+      case 'library':
+        return <IntelLibrary />;
       default:
         return <FocusView />;
     }
