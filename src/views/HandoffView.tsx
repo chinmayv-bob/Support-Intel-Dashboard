@@ -23,7 +23,9 @@ const HandoffView: React.FC = () => {
         return (trendsData?.trends || []).filter(t => t.needs_escalation);
     }, [trendsData]);
 
-    const currentTrend = escalations[activeIndex];
+    // Guard: clamp activeIndex if escalations shrink
+    const safeIndex = activeIndex >= escalations.length ? 0 : activeIndex;
+    const currentTrend = escalations[safeIndex];
 
     // Match ticket_ids from the current trend to critical tickets for detail
     const affectedTickets = useMemo(() => {
@@ -110,7 +112,12 @@ const HandoffView: React.FC = () => {
 
     // ── ACTIVE STATE ──
     return (
-        <div className="space-y-6 pb-12">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="space-y-6 pb-12"
+        >
             {/* Tab Switcher for multiple escalations */}
             <header className="flex items-center justify-between">
                 <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -336,7 +343,7 @@ const HandoffView: React.FC = () => {
 
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

@@ -1,8 +1,10 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useQuality } from '../hooks/useQuality';
 import { useDashboard } from '../hooks/useDashboard';
+import { useMetrics } from '../hooks/useMetrics';
 import { Skeleton } from '../components/shared/Skeleton';
 
 function cn(...inputs: ClassValue[]) {
@@ -12,9 +14,31 @@ function cn(...inputs: ClassValue[]) {
 const QualityView: React.FC = () => {
     const { data: qualityData, isLoading: isQualityLoading, error: qualityError } = useQuality();
     const { data: dashboard, isLoading: isDashboardLoading, error: dashboardError } = useDashboard();
+    const { data: metricsData } = useMetrics();
 
     const isLoading = isQualityLoading || isDashboardLoading;
     const hasError = !!qualityError || !!dashboardError;
+
+    // Build sparkline from real quality score history (avg sentiment per day from metrics)
+    const sparklinePoints = React.useMemo(() => {
+        const metrics = metricsData?.metrics || dashboard?.metrics || [];
+        const avgSentimentMetric = metrics.find(m => m.label === 'Avg Sentiment');
+        if (!avgSentimentMetric?.sparklineData) return null;
+        const raw = avgSentimentMetric.sparklineData.split(',').map(Number).filter(n => !isNaN(n));
+        if (raw.length < 2) return null;
+        const qualityScores = raw.map(s => Math.round((s / 10) * 100));
+        const min = Math.min(...qualityScores);
+        const max = Math.max(...qualityScores);
+        const range = max - min || 1;
+        const w = 478;
+        const h = 100;
+        const step = w / (qualityScores.length - 1);
+        return qualityScores.map((v, i) => {
+            const x = Math.round(i * step);
+            const y = Math.round(h - ((v - min) / range) * (h * 0.8) - h * 0.1);
+            return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+        }).join(' ');
+    }, [metricsData, dashboard]);
 
     if (hasError) {
         return (
@@ -35,7 +59,12 @@ const QualityView: React.FC = () => {
     }
 
     return (
-        <div className="space-y-8 pb-12">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="space-y-8 pb-12"
+        >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Quality Score Card */}
                 <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between h-full relative overflow-hidden group">
@@ -46,9 +75,6 @@ const QualityView: React.FC = () => {
                         <div className="p-2.5 bg-blue-50 rounded-lg border border-blue-100">
                             <span className="material-symbols-outlined text-primary">fact_check</span>
                         </div>
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 flex items-center gap-1 border border-green-200">
-                            <span className="material-symbols-outlined text-[14px]">trending_up</span> Top 15%
-                        </span>
                     </div>
                     <div className="relative z-10">
                         <p className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Today's Support Quality %</p>
@@ -112,9 +138,9 @@ const QualityView: React.FC = () => {
                             ))
                         ) : (
                             [
-                                { title: "Coaching Win", icon: "emoji_events", color: "text-green-600", bg: "bg-green-50", desc: (qualityData as any)?.coaching?.win || qualityData?.coachingOpportunities?.[0] || "No major wins logged today." },
-                                { title: "Coaching Risk", icon: "warning", color: "text-amber-600", bg: "bg-amber-50", desc: (qualityData as any)?.coaching?.risk || qualityData?.coachingOpportunities?.[1] || "No critical risks detected." },
-                                { title: "Next Action", icon: "bolt", color: "text-primary", bg: "bg-primary/5", desc: (qualityData as any)?.coaching?.action || qualityData?.coachingOpportunities?.[2] || "Follow standard SOPs." },
+                                { title: "Insight 1", icon: "lightbulb", color: "text-blue-600", bg: "bg-blue-50", desc: (qualityData as any)?.coaching?.win || qualityData?.coachingOpportunities?.[0] || "Analysis pending." },
+                                { title: "Insight 2", icon: "lightbulb", color: "text-indigo-600", bg: "bg-indigo-50", desc: (qualityData as any)?.coaching?.risk || qualityData?.coachingOpportunities?.[1] || "Analysis pending." },
+                                { title: "Insight 3", icon: "lightbulb", color: "text-violet-600", bg: "bg-violet-50", desc: (qualityData as any)?.coaching?.action || qualityData?.coachingOpportunities?.[2] || "Analysis pending." },
                             ].map((coach, i) => (
                                 <div key={i} className={cn("p-4 rounded-lg border border-slate-100", coach.bg)}>
                                     <div className={cn("flex items-center gap-2 mb-2 font-bold text-sm", coach.color)}>
@@ -138,12 +164,14 @@ const QualityView: React.FC = () => {
                         <div className="relative w-full h-40">
                             {isLoading ? (
                                 <Skeleton className="w-full h-full" />
-                            ) : (
+                            ) : sparklinePoints ? (
                                 <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 478 100">
-                                    <path d="M0 45 L 30 35 L 60 40 L 90 25 L 120 45 L 150 55 L 180 65 L 210 55 L 240 40 L 270 30 L 300 35 L 330 60 L 360 85 L 390 110 L 420 80 L 450 60 L 478 45" fill="none" stroke="#135bec" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                                    <circle cx="90" cy="25" fill="#fff" r="4" stroke="#135bec" strokeWidth="2" />
-                                    <circle cx="180" cy="65" fill="#fff" r="4" stroke="#f59e0b" strokeWidth="2" />
+                                    <path d={sparklinePoints} fill="none" stroke="#135bec" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
+                                    Not enough data for trend
+                                </div>
                             )}
                         </div>
                     </div>
@@ -232,7 +260,7 @@ const QualityView: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

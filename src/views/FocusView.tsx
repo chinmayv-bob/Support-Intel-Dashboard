@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import MetricCard from '../components/shared/MetricCard';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -40,7 +41,12 @@ const FocusView: React.FC = () => {
     }
 
     return (
-        <div className="space-y-8 pb-12">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="space-y-8 pb-12"
+        >
             <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-3">
@@ -187,7 +193,7 @@ const FocusView: React.FC = () => {
                                                     risk.color === 'border-l-amber-500' ? "bg-amber-100 text-amber-700" :
                                                         "bg-emerald-100 text-emerald-700"
                                             )}>{risk.level}</span>
-                                            <span className="text-xs text-gray-400 font-mono">ID: {risk.name.substring(0, 3).toUpperCase()}-{Math.floor(Math.random() * 900) + 100}</span>
+                                            <span className="text-xs text-gray-400 font-mono">ID: {risk.name.substring(0, 3).toUpperCase()}-{String(risk.name).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 900 + 100}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -199,14 +205,6 @@ const FocusView: React.FC = () => {
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-[#130e1b] dark:text-white tracking-tight text-2xl font-bold leading-tight">Action Feed: Critical Tickets</h2>
-                        <div className="flex gap-2">
-                            <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors">
-                                <span className="material-symbols-outlined text-xl">filter_list</span>
-                            </button>
-                            <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-pointer transition-colors">
-                                <span className="material-symbols-outlined text-xl">more_horiz</span>
-                            </button>
-                        </div>
                     </div>
 
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[300px] flex flex-col">
@@ -344,7 +342,15 @@ const FocusView: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Data Freshness Footer */}
+            <div className="flex items-center justify-center gap-2 pt-4 border-t border-slate-100">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[10px] font-medium text-slate-400 tracking-wide">
+                    Last updated: {dashboard?.generatedAt || '—'}
+                </span>
+            </div>
+        </motion.div>
     );
 };
 

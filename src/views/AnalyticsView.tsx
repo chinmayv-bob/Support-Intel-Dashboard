@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useTrends } from '../hooks/useTrends';
@@ -66,7 +67,12 @@ const AnalyticsView: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col xl:flex-row gap-8 items-start pb-12">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="flex flex-col xl:flex-row gap-8 items-start pb-12"
+        >
             {/* Filters Sidebar */}
             <aside className="w-full xl:w-72 shrink-0 space-y-6 xl:sticky xl:top-24">
                 <div className="flex items-center justify-between">
@@ -155,17 +161,14 @@ const AnalyticsView: React.FC = () => {
                                 <h3 className="font-bold text-slate-900">Volume Trends</h3>
                                 <p className="text-xs text-slate-500">Ticket volume by day of week</p>
                             </div>
-                            <button className="p-1 rounded hover:bg-slate-100 text-slate-400">
-                                <span className="material-symbols-outlined">more_horiz</span>
-                            </button>
                         </div>
                         <div className="flex-1 flex items-end justify-between gap-2 md:gap-4 px-2">
                             {(() => {
                                 // Extract last 7 days volume from metrics sparkline
                                 const volumeMetric = dashboard?.metrics?.find(m => m.label === 'Total Tickets');
                                 const volumeData = volumeMetric?.sparklineData
-                                    ? volumeMetric.sparklineData.split(',').map(Number)
-                                    : [65, 82, 45, 55, 90, 25, 20]; // Fallback to mock if empty
+                                    ? volumeMetric.sparklineData.split(',').map(Number).filter(n => !isNaN(n))
+                                    : [];
 
                                 // Generate labels for the last 7 days ending today
                                 const days: string[] = [];
@@ -176,6 +179,15 @@ const AnalyticsView: React.FC = () => {
                                 }
 
                                 const sevenDaysData = volumeData.slice(-7);
+
+                                if (sevenDaysData.length === 0) {
+                                    return (
+                                        <div className="flex-1 flex items-center justify-center text-xs text-slate-400">
+                                            <span className="material-symbols-outlined text-slate-300 mr-2">bar_chart</span>
+                                            Waiting for volume data
+                                        </div>
+                                    );
+                                }
 
                                 return sevenDaysData.map((val, i) => {
                                     const maxVal = Math.max(...sevenDaysData, 100); // Normalize height
@@ -303,7 +315,7 @@ const AnalyticsView: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

@@ -30,7 +30,7 @@ const IntelLibrary: React.FC = () => {
     }
 
     return (
-        <div className="max-w-[1600px] mx-0 py-8 px-10">
+        <div>
             <header className="mb-12 space-y-8">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Intel Library</h1>

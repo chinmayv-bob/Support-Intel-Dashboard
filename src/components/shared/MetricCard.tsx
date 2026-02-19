@@ -55,19 +55,19 @@ const MetricCard: React.FC<MetricCardProps> = ({
     };
 
     return (
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{label}</p>
             <div className="flex items-end justify-between">
                 <div>
-                    <h4 className="text-3xl font-bold text-slate-900">{value}</h4>
+                    <h4 className="text-3xl font-bold text-slate-900 tracking-tight">{value}</h4>
                     <span className={cn("text-xs font-medium flex items-center mt-1", getStatusColor())}>
                         <span className="material-symbols-outlined text-[14px] mr-0.5">{getTrendIcon()}</span>
                         {trend}
                     </span>
                 </div>
-                <div className="w-20 h-10">
-                    <svg className={cn("w-full h-full overflow-visible", sparklineColor)} fill="none" stroke="currentColor" viewBox="0 0 40 10">
-                        <path d={getPathData(sparklineData)} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                <div className="w-20 h-10 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <svg className="w-full h-full overflow-visible" fill="none" viewBox="0 0 40 10">
+                        <path d={getPathData(sparklineData)} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" stroke={sparklineColor} />
                     </svg>
                 </div>
             </div>
