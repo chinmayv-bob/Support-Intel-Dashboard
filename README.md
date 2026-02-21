@@ -1,6 +1,6 @@
 # Support Intel Dashboard 📊
 
-> **Replace a 30-minute daily sync-up with a 5-minute glance.**
+> **Providing 30 minutes of daily sync-up insight in a 5-minute glance.**
 
 Support Intel is an AI-driven dashboard designed to provide high-fidelity insights into customer support operations. By automating the extraction of trends, risks, and quality signals from support tickets, it enables support leadership to move from "feeling" to "knowing."
 
