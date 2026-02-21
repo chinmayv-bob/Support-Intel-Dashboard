@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# Support Intel Dashboard 📊
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Transforming manual conversation analysis from 25 hours to 5 minutes.**
 
-Currently, two official plugins are available:
+Support Intel is an AI-driven dashboard designed to provide high-fidelity insights into customer support operations. By automating the extraction of trends, risks, and quality signals from support tickets, it enables support leadership to move from "feeling" to "knowing."
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 The Impact
+- **Efficiency**: Replace a **30-minute daily sync-up** with a **5-minute glance**.
+- **Accuracy**: Eliminates manual bias by using LLMs to categorize and score 100% of tickets.
+- **Proactive Risk Management**: Identifies churn and SLA risks before they escalate.
 
-## React Compiler
+## ✨ Key Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Focus View (The Executive Daily)
+- **Daily AI Brief**: A high-level summary of the last 24 hours.
+- **System Risk Monitors**: Real-time health scores for different support panels.
+- **Critical Ticket Feed**: Instant visibility into high-frustration/high-impact tickets.
 
-## Expanding the ESLint configuration
+### 2. Analytics View
+- **Trend Detection**: Automatically groups tickets into emerging trends with AI-generated root cause analysis.
+- **Growth Tracking**: Monitor how fast specific issues are scaling.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 3. Quality & Coaching
+- **Sentiment Analysis**: Tracks sentiment shifts throughout a conversation.
+- **Redundant Reply Detection**: Identifies efficiency leaks where agents are sending multiple non-value-add messages.
+- **AI Coaching**: Automated feedback on wins, risks, and action items.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 4. Intel Library
+- **Knowledge Base Automation**: Suggests new KB articles based on recurring trends.
+- **FAQ Generation**: Automatically drafts FAQs for common customer queries.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🛠️ Tech Stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS v4, Framer Motion (Animations), Lucide (Icons).
+- **Backend**: Google Apps Script (GAS) serving a JSON API.
+- **Data Layer**: Google Sheets (used as a lightweight, collaborative database).
+- **AI Engine**: Sim.AI (Workflow automation for ticket summarization and sentiment scoring).
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 📦 Installation & Setup
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/support-intel-dashboard.git
+   cd support-intel-dashboard
+   ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**:
+   Create a `.env` file in the root and add your Apps Script API URL:
+   ```env
+   VITE_API_URL=https://script.google.com/macros/s/.../exec
+   ```
+
+4. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+
+## 📐 Architecture
+
+The system follows a decoupled architecture:
+1. **Extraction**: Sim.AI workflows process incoming tickets via webhooks.
+2. **Storage**: Processed data is written to structured Google Sheets.
+3. **Bridge**: Google Apps Script acts as a RESTful middleware, exposing sheets data via `doGet`.
+4. **Presentation**: The React SPA fetches data and provides a high-performance, interactive UI.
+
+---
+
+*Built for Support Leaders who value data-driven decisions.*
